@@ -10,7 +10,8 @@ export async function GET() {
          return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
       }
 
-      const res = await fetch(`${process.env.URL_API}/cart`, {
+      const baseUrl = process.env.URL_API || 'https://ecommerce.routemisr.com/api/v1';
+      const res = await fetch(`${baseUrl}/cart`, {
          method: 'GET',
          headers: {
             token: userToken + "",
