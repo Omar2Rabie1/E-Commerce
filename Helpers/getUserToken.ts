@@ -1,25 +1,21 @@
-"use server";
-import { decode } from "next-auth/jwt";
-import { cookies } from "next/headers";
+// Helpers/getUserToken.ts
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/src/auth";
 
-
-export async function getUserToken() {
-   try {
-      const cookieStore = await cookies();
-      const getTokenFromCookies = cookieStore.get("next-auth.session-token")?.value;
-      
-      if (!getTokenFromCookies) {
-         return null;
-      }
-
-      const accessToken = await decode({
-         token: getTokenFromCookies,
-         secret: process.env.NEXTAUTH_SECRET!,
-      });
-      
-      return accessToken?.token || null;
-   } catch (error) {
-      console.error("Error getting user token:", error);
+export async function getUserToken(): Promise<string | null> {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    console.log("🔑 getUserToken - Session:", session);
+    
+    if (!session || !session.token) {
+      console.warn("⚠️ getUserToken - No token found in session");
       return null;
-   }
+    }
+    
+    return session.token as string;
+  } catch (error) {
+    console.error("❌ getUserToken - Error:", error);
+    return null;
+  }
 }

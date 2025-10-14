@@ -55,7 +55,7 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       console.log("🔄 JWT Callback - User:", user);
       console.log("🔄 JWT Callback - Token:", token);
 
@@ -90,10 +90,25 @@ export const authOptions: AuthOptions = {
       };
     },
   },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  // ✅ CRITICAL for Vercel deployment
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production', // true on Vercel
+      },
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
 };
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
-
