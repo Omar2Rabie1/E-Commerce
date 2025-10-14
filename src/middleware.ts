@@ -8,11 +8,12 @@ const intlMiddleware = createIntlMiddleware(routing);
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ✅ IMPORTANT: Let NextAuth handle its own routes
+  // ✅ IMPORTANT: Exclude ALL API routes and Next internals from i18n
   if (
-    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api') || // exclude every API route (not only /api/auth)
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api/_next')
+    pathname.startsWith('/_vercel') ||
+    /\.[^/]+$/.test(pathname) // exclude files like /images/logo.png
   ) {
     return NextResponse.next();
   }
@@ -21,10 +22,7 @@ export default function middleware(request: NextRequest) {
   return intlMiddleware(request);
 }
 
+// Apply middleware to all non-API, non-static paths
 export const config = {
-  matcher: [
-    '/',
-    '/(ar|en)/:path*',
-    '/((?!api/auth|_next|_vercel|.*\\..*).*)'
-  ]
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
 };
