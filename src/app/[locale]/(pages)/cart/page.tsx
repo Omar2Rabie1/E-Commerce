@@ -29,11 +29,15 @@ export default function Cart() {
     }
   }, [cartData]);
 
+  // Avoid infinite refetch loops when cart is empty
+  const hasRequestedRef = useRef(false);
   useEffect(() => {
-    if (!cartData?.data?.products?.length) {
+    if (hasRequestedRef.current) return;
+    if (!isloading && (!cartData || !cartData?.data?.products?.length)) {
+      hasRequestedRef.current = true;
       getCart();
     }
-  }, [cartData, getCart]);
+  }, [cartData, getCart, isloading]);
 
   const handleImageLoad = () => {
     setImagesLoaded(true);
