@@ -5,15 +5,25 @@ import { CheckOutI } from "@/src/interfaces";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { getUserToken } from "@/Helpers/getUserToken";
+import { useSession } from "next-auth/react";
 
 export default function CheckOut({ cartId }: { cartId: string }) {
+  const { data: session, status } = useSession();
   const detailsInput = useRef<HTMLInputElement | null>(null);
   const cityInput = useRef<HTMLInputElement | null>(null);
   const phoneInput = useRef<HTMLInputElement | null>(null);
 
   async function checkOutSession(paymentMethod: 'card' | 'cash') {
-    const userToken = await getUserToken();
+    if (status === "loading") {
+      alert("Please wait, loading...");
+      return;
+    }
+    
+    if (!session?.token) {
+      alert("Please login to continue");
+      return;
+    }
+    
     const shippingAddress = {
       details: detailsInput.current?.value || "",
       phone: phoneInput.current?.value || "",
@@ -46,7 +56,7 @@ export default function CheckOut({ cartId }: { cartId: string }) {
         {
           method: "POST",
           headers: {
-            token: userToken + "",
+            token: session.token as string,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ shippingAddress }),
