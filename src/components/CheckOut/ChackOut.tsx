@@ -5,15 +5,21 @@ import { CheckOutI } from "@/src/interfaces";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { getUserToken } from "@/Helpers/getUserToken";
+import { useSession } from "next-auth/react";
+import toast from "react-hot-toast";
 
 export default function CheckOut({ cartId }: { cartId: string }) {
+  const { data: session } = useSession();
   const detailsInput = useRef<HTMLInputElement | null>(null);
   const cityInput = useRef<HTMLInputElement | null>(null);
   const phoneInput = useRef<HTMLInputElement | null>(null);
 
   async function checkOutSession(paymentMethod: 'card' | 'cash') {
-    const userToken = await getUserToken();
+    const userToken = session?.token;
+    if (!userToken) {
+      toast.error("Please login to proceed to checkout");
+      return;
+    }
     const shippingAddress = {
       details: detailsInput.current?.value || "",
       phone: phoneInput.current?.value || "",
@@ -23,40 +29,49 @@ export default function CheckOut({ cartId }: { cartId: string }) {
     if (paymentMethod === 'card') {
       // الدفع بالفيزا - يذهب لصفحة الدفع
       const baseUrl = process.env.NEXTAUTH_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
-      const res = await fetch(
-        `https://ecommerce.routemisr.com/api/v1/orders/checkout-session/${cartId}?url=${baseUrl}`,
-        {
-          method: "POST",
-          headers: {
-            token: userToken + "",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ shippingAddress }),
+      try {
+        const res = await fetch(
+          `https://ecommerce.routemisr.com/api/v1/orders/checkout-session/${cartId}?url=${baseUrl}`,
+          {
+            method: "POST",
+            headers: {
+              token: userToken,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ shippingAddress }),
+          }
+        );
+        const data: CheckOutI = await res.json();
+        if (data.status === "success") {
+          location.href = data.session.url;
+        } else {
+          toast.error(data.message || "Failed to start checkout session");
         }
-      );
-      const data: CheckOutI = await res.json();
-      console.log(data);
-      if (data.status === "success") {
-        location.href = data.session.url;
+      } catch (error) {
+        toast.error("Failed to start checkout session");
       }
     } else {
       // الدفع النقدي
-      const res = await fetch(
-        `https://ecommerce.routemisr.com/api/v1/orders/${cartId}`,
-        {
-          method: "POST",
-          headers: {
-            token: userToken + "",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ shippingAddress }),
+      try {
+        const res = await fetch(
+          `https://ecommerce.routemisr.com/api/v1/orders/${cartId}`,
+          {
+            method: "POST",
+            headers: {
+              token: userToken,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ shippingAddress }),
+          }
+        );
+        const data = await res.json();
+        if (data.status === "success") {
+          location.href = "/orders";
+        } else {
+          toast.error(data.message || "Failed to place cash order");
         }
-      );
-      const data = await res.json();
-      console.log(data);
-      if (data.status === "success") {
-        // إعادة توجيه لصفحة تأكيد الطلب أو الصفحة الرئيسية
-        location.href = "/orders";
+      } catch (error) {
+        toast.error("Failed to place cash order");
       }
     }
   }
@@ -66,14 +81,14 @@ export default function CheckOut({ cartId }: { cartId: string }) {
     
     // التحقق من البيانات المدخلة
     if (!cityInput.current?.value || !detailsInput.current?.value || !phoneInput.current?.value) {
-      alert("Please fill all shipping details");
+      toast.error("Please fill all shipping details");
       return;
     }
 
     // التحقق من صحة رقم الهاتف
     const phoneRegex = /^01[0125][0-9]{8}$/;
     if (!phoneRegex.test(phoneInput.current.value)) {
-      alert("Please enter a valid Egyptian phone number");
+      toast.error("Please enter a valid Egyptian phone number");
       return;
     }
 

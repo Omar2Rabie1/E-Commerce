@@ -9,12 +9,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useContext, useEffect, useState, useRef } from "react";
 import toast from "react-hot-toast";
-
-import { getUserToken } from "@/Helpers/getUserToken";
+import { useSession } from "next-auth/react";
 import LoadingPage from "@/src/app/loading";
 
 export default function Cart() {
   const { cartData, isloading, getCart } = useContext(CartContext);
+  const { data: session } = useSession();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [clearingCart, setClearingCart] = useState<boolean>(false);
@@ -63,7 +63,11 @@ export default function Cart() {
   };
 
   async function removeItem(productId: string) {
-    const userToken = await getUserToken();
+    const userToken = session?.token;
+    if (!userToken) {
+      toast.error("Please login to modify your cart");
+      return;
+    }
     setRemovingId(productId);
     try {
       const res = await fetch(
@@ -71,7 +75,7 @@ export default function Cart() {
         {
           method: "DELETE",
           headers: {
-            token: userToken + "",
+            token: userToken,
           },
         }
       );
@@ -91,8 +95,12 @@ export default function Cart() {
   }
 
   async function updateItem(productId: string, count: number) {
-    const userToken = await getUserToken();
+    const userToken = session?.token;
     if (count <= 0) return;
+    if (!userToken) {
+      toast.error("Please login to modify your cart");
+      return;
+    }
 
     setUpdatingId(productId);
     try {
@@ -102,7 +110,7 @@ export default function Cart() {
           method: "PUT",
           body: JSON.stringify({ count }),
           headers: {
-            token: userToken + "",
+            token: userToken,
             "Content-Type": "application/json",
           },
         }
@@ -124,13 +132,17 @@ export default function Cart() {
   }
 
   async function clearCart() {
-    const userToken = await getUserToken();
+    const userToken = session?.token;
+    if (!userToken) {
+      toast.error("Please login to modify your cart");
+      return;
+    }
     setClearingCart(true);
     try {
       const res = await fetch(`https://ecommerce.routemisr.com/api/v1/cart`, {
         method: "DELETE",
         headers: {
-          token: userToken + "",
+          token: userToken,
         },
       });
       const data: CartI = await res.json();
