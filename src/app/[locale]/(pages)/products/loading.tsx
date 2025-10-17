@@ -9,9 +9,7 @@ export default function loading() {
       {/* Spinner */}
       <div className="flex flex-col items-center gap-4 relative z-10">
         <div className="w-14 h-14 border-4 border-gray-300 dark:border-gray-600 border-t-blue-600 dark:border-t-cyan-400 rounded-full animate-spin"></div>
-        <p className="text-gray-700 dark:text-cyan-200 text-lg font-medium animate-pulse">
-          Loading....
-        </p>
+
       </div>
 
       {/* Skeleton Preview */}
