@@ -8,7 +8,7 @@ export default function Footer() {
                {/* العنوان والشعار */}
                <div className="mb-8 text-center">
                   <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-400 dark:via-cyan-300 dark:to-indigo-400 mb-3">
-                     ShopMart
+                     My Shop
                   </h2>
                   <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed max-w-2xl mx-auto">
                      Your one-stop destination for the latest technology, fashion, and
@@ -18,15 +18,15 @@ export default function Footer() {
                   <div className="flex flex-col sm:flex-row justify-center items-center gap-6 text-gray-500 dark:text-gray-400">
                      <div className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-blue-600 dark:bg-cyan-400 rounded-full"></span>
-                        <span>123 Shop Street, October City, DC 12345</span>
+                        <span>Fayoum---Senoris</span>
                      </div>
                      <div className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full"></span>
-                        <span>(+20) 01093333333</span>
+                        <span>(+20) 01044804920</span>
                      </div>
                      <div className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-purple-600 dark:bg-indigo-400 rounded-full"></span>
-                        <span>support@shopmart.com</span>
+                        <span>or266630@gmail.com</span>
                      </div>
                   </div>
                </div>
