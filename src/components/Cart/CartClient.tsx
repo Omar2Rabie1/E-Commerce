@@ -12,7 +12,7 @@ import { useSession } from "next-auth/react";
 import LoadingPage from "@/src/app/loading";
 
 export default function CartClient() {
-  const { cartData, isloading, getCart } = useContext(CartContext);
+  const { cartData, isloading, getCart, setCartData } = useContext(CartContext);
   const { data: session, status } = useSession();
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -61,6 +61,12 @@ export default function CartClient() {
     }
   };
 
+  function recalcTotals(updatedProducts: Product[]) {
+    const numItems = updatedProducts.reduce((sum, p) => sum + (p.count || 0), 0);
+    const totalPrice = updatedProducts.reduce((sum, p) => sum + (p.price || 0) * (p.count || 0), 0);
+    return { numItems, totalPrice };
+  }
+
   async function removeItem(productId: string) {
     if (status === "loading") {
       toast.error("Please wait, loading...");
@@ -87,6 +93,25 @@ export default function CartClient() {
 
       if (data.status === "success") {
         toast.success("Product removed from cart");
+        // Optimistic local update
+        setLocalCart(prev => {
+          if (!prev) return prev;
+          const updatedProducts = prev.data.products.filter(p => p.product.id !== productId);
+          const { numItems, totalPrice } = recalcTotals(updatedProducts);
+          const updated: CartI = {
+            ...prev,
+            numOfCartItems: numItems,
+            data: {
+              ...prev.data,
+              products: updatedProducts,
+              totalCartPrice: totalPrice,
+            },
+          };
+          // Sync context as well
+          setCartData(updated);
+          return updated;
+        });
+        // Final sync from server
         getCart();
       } else {
         toast.error(data.message || "Failed to remove product");
@@ -129,6 +154,26 @@ export default function CartClient() {
 
       if (data.status === "success") {
         toast.success("Quantity updated");
+        // Optimistic local update
+        setLocalCart(prev => {
+          if (!prev) return prev;
+          const updatedProducts = prev.data.products.map(p =>
+            p.product.id === productId ? { ...p, count } : p
+          );
+          const { numItems, totalPrice } = recalcTotals(updatedProducts);
+          const updated: CartI = {
+            ...prev,
+            numOfCartItems: numItems,
+            data: {
+              ...prev.data,
+              products: updatedProducts,
+              totalCartPrice: totalPrice,
+            },
+          };
+          setCartData(updated);
+          return updated;
+        });
+        // Sync with server result
         getCart();
       } else {
         toast.error(data.message || "Failed to update quantity");
@@ -161,7 +206,10 @@ export default function CartClient() {
       });
       const data: CartI = await res.json();
 
-      if (data.message === "success") {
+      if ((data as any).message === "success" || data.status === 'success') {
+        // Optimistic local clear
+        setLocalCart(null);
+        setCartData(null as unknown as CartI | null);
         getCart();
       } else {
         toast.error(data.message || "Failed to clear cart");
@@ -181,6 +229,21 @@ export default function CartClient() {
   };
 
   const displayData = localCart || cartData;
+
+  if (!displayData) {
+    return (
+      <section className="bg-white dark:bg-gray-900 min-h-screen py-10 flex items-center justify-center transition-colors duration-300">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-300 text-xl">Your Cart&apos;s Empty</p>
+          <Link href="/products">
+            <Button className="mt-4 bg-blue-600 hover:bg-blue-700 text-white">
+              Shopping Now <ShoppingCartIcon />
+            </Button>
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>

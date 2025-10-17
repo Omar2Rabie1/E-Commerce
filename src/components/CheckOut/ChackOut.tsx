@@ -34,11 +34,11 @@ export default function CheckOut({ cartId }: { cartId: string }) {
       // الدفع بالفيزا - يذهب لصفحة الدفع
       const baseUrl = process.env.NEXTAUTH_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
       const res = await fetch(
-        `https://ecommerce.routemisr.com/api/v1/orders/checkout-session/${cartId}?url=${baseUrl}`,
+        `https://ecommerce.routemisr.com/api/v1/orders/checkout-session/${cartId}?url=${encodeURIComponent(baseUrl)}`,
         {
           method: "POST",
           headers: {
-            token: userToken + "",
+            token: session.token as string,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ shippingAddress }),
